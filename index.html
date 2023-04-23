@@ -4,27 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DePolymerase Predictor (DePP) - Web version</title>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/pyodide/v0.23.0/full/pyodide.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <div id="info-box">
-        <h2>Instructions:</h2>
-        <ol>
-            <li>Upload a FASTA file containing protein sequences.</li>
-            <li>Upload a training set (optional, default set is used if not provided).</li>
-            <li>Click "Calculate Protein Parameters" to generate a dataframe with protein parameters.</li>
-            <li>Click "Predict Phage Depolymerases" to predict the probability of proteins being phage depolymerases.</li>
-            <li>Save the results to CSV files as needed.</li>
-        </ol>
+
+    <div class="container-fluid p-3 bg-primary text-white">
+        <div class="row">
+            <div class="col-sm-2 text-center">
+                <img class="img-max" src="./assets/DePP.png" alt="DePP logo">
+            </div>
+            <div class="col-sm-10">
+                <h1>DePolymerase Predictor</h1>
+                <h6>The first ML phage depolymerase predictor running in your browser!<h6>
+            </div>
+        </div>
     </div>
-    <input type="file" id="fasta-upload" accept=".fasta,.faa,.fa"><br>
-    <input type="file" id="training-upload" accept=".csv"><br>
-    <button id="calculate-parameters">Calculate Protein Parameters</button><br>
-    <button id="predict-depolymerases">Predict Phage Depolymerases</button><br>
-    <button id="save-parameters">Save Protein Parameters to CSV</button><br>
-    <button id="save-predictions">Save Predicted Phage Depolymerases to CSV</button><br>
-    <button id="reset">Reset</button>
+    <div class="container-fluid p-3">
+        <h2>About</h2>
+        <p>This is a web version of the DePolymerase Predictor (DePP) tool described in 
+           <a href="https://doi.org/10.1101/2023.02.28.530424">Magill & Skvortsov (2023)</a>
+            paper. DePP is a machine learning tool that predicts the probability of a protein
+             being a phage depolymerase.
+        </p>
+        <div id="info-box">
+            <h2>Use Instructions</h2>
+            <ol>
+                <li>Select a FASTA file containing protein sequences you would like to analyse.</li>
+                <li>Select a training set (optional, default training set is used if not provided).</li>
+                <li>Click "Calculate Protein Parameters" to generate a dataframe with protein parameters.</li>
+                <li>Click "Predict Phage Depolymerases" to predict the probability of proteins being phage depolymerases.</li>
+                <li>Save the results to CSV files as needed.</li>
+            </ol>
+        </div>
+        <div class="input-group mb-1 input-group-sm">
+            <span class="input-group-text">Input FASTA</span>
+            <input class="form-control-sm" type="file" id="fasta-upload" accept=".fasta,.faa,.fa"><br>
+        </div>
+        <div class="input-group mb-1 input-group-sm">
+            <span class="input-group-text">[Training Set]</span>
+            <input class="form-control-sm" type="file" id="training-upload" accept=".csv"><br>
+        </div>
+        <div class="row">
+            <div class="col-sm-3"> 
+                <div class="d-grid gap-1">
+                    <button type="button" class="btn btn-secondary btn-sm" id="calculate-parameters">Calculate Protein Parameters</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="predict-depolymerases">Predict Phage Depolymerases</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="save-parameters">Save Protein Parameters to CSV</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="save-predictions">Save Predictions to CSV</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="reset">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script src="js/scripts.js" defer></script>
 </body>

@@ -190,6 +190,21 @@ async function main() {
         console.clear();
     }
 
+    function updateProgressBar(value, show = true) {
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+    
+        progressBar.style.width = value + '%';
+        progressBar.setAttribute('aria-valuenow', value);
+    
+        if (show) {
+            progressContainer.classList.remove('d-none');
+        } else {
+            progressContainer.classList.add('d-none');
+        }
+    }
+
+
 }
 
 

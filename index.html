@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DePolymerase Predictor (DePP) - Web version</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.0/full/pyodide.js"></script>
+</head>
+<body>
+    <div id="info-box">
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Upload a FASTA file containing protein sequences.</li>
+            <li>Upload a training set (optional, default set is used if not provided).</li>
+            <li>Click "Calculate Protein Parameters" to generate a dataframe with protein parameters.</li>
+            <li>Click "Predict Phage Depolymerases" to predict the probability of proteins being phage depolymerases.</li>
+            <li>Save the results to CSV files as needed.</li>
+        </ol>
+    </div>
+    <input type="file" id="fasta-upload" accept=".fasta,.faa,.fa"><br>
+    <input type="file" id="training-upload" accept=".csv"><br>
+    <button id="calculate-parameters">Calculate Protein Parameters</button><br>
+    <button id="predict-depolymerases">Predict Phage Depolymerases</button><br>
+    <button id="save-parameters">Save Protein Parameters to CSV</button><br>
+    <button id="save-predictions">Save Predicted Phage Depolymerases to CSV</button><br>
+    <button id="reset">Reset</button>
+
+    <script src="js/scripts.js" defer></script>
+</body>
+</html>

@@ -1,4 +1,7 @@
 async function main() {
+    disableAllButtons(true);
+    setLoadingStatus('Loading packages and initialising the program, please wait...');
+    document.getElementById('predict-depolymerases').disabled = true;
     let pyodide = await loadPyodide();
     await pyodide.loadPackage("micropip");
     const micropip = pyodide.pyimport("micropip");
@@ -8,15 +11,30 @@ async function main() {
         import js
     `);
 
+
+
     // Initialize global variables to store protein parameters and depolymerase predictions
     let protein_parameters;
     let depolymerase_predictions;
 
+    // disableAllButtons(false);
+    document.getElementById('reset').disabled = false;
+    setLoadingStatus('Initialisation complete!', true);
+    updateButtonStates();
+
     // Add event listeners for buttons and file inputs
+    document.getElementById('fasta-upload').addEventListener('input', updateCalculateParametersButtonState);
     document.getElementById('calculate-parameters').addEventListener('click', calculateProteinParameters);
     document.getElementById('predict-depolymerases').addEventListener('click', predictPhageDepolymerases);
     document.getElementById('reset').addEventListener('click', reset);
     
+    document.getElementById('display-predictions').addEventListener('click', () => {
+        if (!depolymerase_predictions) {
+            alert("Phage depolymerase predictions are not available. Please calculate them first.");
+            return;
+        }
+        displayPredictionsTable();
+    });
     
     document.getElementById('save-parameters').addEventListener('click', () => {
         if (!protein_parameters) {
@@ -36,14 +54,16 @@ async function main() {
     
     
     async function calculateProteinParameters() {
+        const calculateParametersButton = document.getElementById('calculate-parameters');
+        toggleButtonLoading(calculateParametersButton, true);
         const fastaFileInput = document.getElementById('fasta-upload');
         const file = fastaFileInput.files[0];
         if (!file) {
+            toggleButtonLoading(calculateParametersButton, false);
             alert('Please select a FASTA file.');
             return;
         }
         const fileContent = await file.text();
-        console.log(fileContent);
         try {
             // Set the file content to a Python variable
             pyodide.globals.set('fileContent', fileContent);
@@ -72,17 +92,26 @@ async function main() {
 
             // Parse the JSON string and display the result in the console or process it further
             protein_parameters = JSON.parse(protein_parameters_json);
-            console.log("Parameters:", protein_parameters);
-        
+            toggleButtonLoading(calculateParametersButton, false);
+            updateButtonStates();
+            
+
         } catch (error) {
             console.log(error.message);
+        } finally {
+            toggleButtonLoading(calculateParametersButton, false);
+            updateButtonStates();
         }
+        
     }
     
     
     async function predictPhageDepolymerases() {
+        const predictDepolymerasesButton = document.getElementById('predict-depolymerases');
+        toggleButtonLoading(predictDepolymerasesButton, true);
         if (!protein_parameters) {
             alert("Protein parameters are not available. Please calculate them first.");
+            toggleButtonLoading(predictDepolymerasesButton, false);
             return;
         }
 
@@ -137,10 +166,14 @@ async function main() {
 
             // Parse the JSON string and display the result in the console or process it further
             depolymerase_predictions = JSON.parse(depolymerase_predictions_json);
-            console.log("Depolymerase predictions:", depolymerase_predictions);
+            toggleButtonLoading(predictDepolymerasesButton, false);
+            updateButtonStates();
 
         } catch (error) {
             console.log(error.message);
+        } finally {
+            toggleButtonLoading(predictDepolymerasesButton, false);
+            updateButtonStates();
         }
     }
 
@@ -181,27 +214,141 @@ async function main() {
         // Clear stored data
         protein_parameters = null;
         depolymerase_predictions = null;
-    
+        updateButtonStates();
+
+        document.getElementById('calculate-parameters').disabled = true;
+        document.getElementById('predict-depolymerases').disabled = true;
+
         // Reset file input elements
         document.getElementById('fasta-upload').value = '';
         document.getElementById('training-upload').value = '';
     
+        // Clear the table
+        $('#table-container').empty();
+        
         // Clear console
         console.clear();
+
     }
 
-    function updateProgressBar(value, show = true) {
-        const progressBar = document.getElementById('progress-bar');
-        const progressContainer = document.getElementById('progress-container');
-    
-        progressBar.style.width = value + '%';
-        progressBar.setAttribute('aria-valuenow', value);
-    
-        if (show) {
-            progressContainer.classList.remove('d-none');
+    function updateButtonStates() {
+        document.getElementById('predict-depolymerases').disabled = !protein_parameters;
+        document.getElementById('save-parameters').disabled = !protein_parameters;
+        document.getElementById('save-predictions').disabled = !depolymerase_predictions;
+        document.getElementById('display-predictions').disabled = !depolymerase_predictions;
+    }
+
+
+    function setLoadingStatus(text, isComplete = false) {
+        const loadingStatus = document.getElementById('loading-status');
+        if (isComplete) {
+            loadingStatus.innerHTML = '<span style="color: blue;">' + text + '</span>';
         } else {
-            progressContainer.classList.add('d-none');
+            loadingStatus.innerHTML = '<div class="d-flex align-items-center"><div class="spinner-border text-primary" role="status"></div><span class="ml-2">' + text + '</span></div>';
         }
+    }
+    
+    function disableAllButtons(disable) {
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach((button) => {
+            button.disabled = disable;
+        });
+    }
+    
+    function updateCalculateParametersButtonState() {
+        const fastaFileInput = document.getElementById('fasta-upload');
+        const hasFile = fastaFileInput.files.length > 0;
+        document.getElementById('calculate-parameters').disabled = !hasFile;
+    }
+
+    function toggleButtonLoading(button, isLoading) {
+        if (!button) {
+            console.error('toggleButtonLoading: Invalid button element');
+            return;
+        }
+        
+        let spinner = button.querySelector('.spinner-border');
+        
+        if (isLoading) {
+            if (!spinner) {
+                spinner = document.createElement('span');
+                spinner.className = 'spinner-border spinner-border-sm';
+                spinner.setAttribute('role', 'status');
+                spinner.setAttribute('aria-hidden', 'true');
+                button.insertBefore(spinner, button.firstChild);
+                button.dataset.originalText = button.textContent.trim();
+            }
+            button.disabled = true;
+            button.textContent = ' Working...';
+        } else {
+            if (spinner) {
+                button.removeChild(spinner);
+            }
+            button.disabled = false;
+            button.textContent = button.dataset.originalText;
+        }
+    }
+
+    function displayPredictionsTable() {
+        const tableContainer = document.getElementById('table-container');
+        const tableHTML = jsonToHTMLTable(depolymerase_predictions, 'table table-hover table-striped');
+        tableContainer.innerHTML = tableHTML;
+        // Initialise the Bootstrap Table plugin
+        $('table').bootstrapTable();
+    }
+    
+    function jsonToHTMLTable(jsonArray, tableClasses = '') {
+        // Create container div
+        const container = document.createElement('div');
+    
+        // Add the header (h2) element
+        const header = document.createElement('h2');
+        header.innerText = 'Depolymerase predictions';
+        container.appendChild(header);
+    
+        // Create the table element
+        const table = document.createElement('table');
+        table.classList = tableClasses;
+    
+        // Add data attributes for pagination
+        table.setAttribute('data-pagination', 'true');
+        table.setAttribute('data-page-size', '10');
+        table.setAttribute('data-side-pagination', 'client');
+        table.setAttribute('data-resizable', 'true');
+    
+        // Table header
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        if (jsonArray.length > 0) {
+            const keys = Object.keys(jsonArray[0]);
+            keys.forEach((key) => {
+                const th = document.createElement('th');
+                th.setAttribute('data-field', key);
+                th.setAttribute('data-sortable', 'true');
+                th.innerText = key;
+                headerRow.appendChild(th);
+            });
+        }
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+    
+        // Table body
+        const tbody = document.createElement('tbody');
+        jsonArray.forEach((row) => {
+            const tr = document.createElement('tr');
+            for (const key in row) {
+                const td = document.createElement('td');
+                td.innerText = row[key];
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+    
+        // Append table to container div
+        container.appendChild(table);
+    
+        return container.outerHTML;
     }
 
 
